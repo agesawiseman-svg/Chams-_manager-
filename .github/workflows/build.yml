@@ -1,0 +1,62 @@
+name: Build app
+
+on:
+  workflow_dispatch:   # gives you a manual "Run workflow" button
+  push:
+    branches: [main]
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: unzip -q chama_manager.zip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate platform folders and build APK
+        working-directory: chama_manager
+        run: |
+          flutter create --platforms=android .
+          flutter pub get
+          flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: chama_manager/build/app/outputs/flutter-apk/app-release.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        shell: bash
+        run: unzip -q chama_manager.zip
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate platform folders and build Windows app
+        working-directory: chama_manager
+        shell: bash
+        run: |
+          flutter create --platforms=windows .
+          flutter pub get
+          flutter build windows --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-app
+          path: chama_manager/build/windows/x64/runner/Release
